@@ -61,9 +61,12 @@ if uploaded_file is not None:
         st.header("Summary")
         with st.spinner("Generating summary..."):
             summary_prompt = f"Summarize this training material in simple terms:\n{content_text[:3000]}"
-            summary = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": summary_prompt}]
+            short_text = full_text[:3000]  # Adjust length to stay within token limits
+summary = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": f"Summarize the following text:\n\n{short_text}"}]
+)
+
             )["choices"][0]["message"]["content"]
             st.write(summary)
 
