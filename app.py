@@ -9,6 +9,7 @@ import time
 from langdetect import detect
 from googletrans import Translator
 
+# Load OpenAI API Key
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 translator = Translator()
 
@@ -17,9 +18,10 @@ st.set_page_config(layout="wide", page_title="AI Training Assistant", page_icon=
 # Progress Meter
 def loading_bar(text, duration=2):
     with st.spinner(text):
+        progress = st.empty()
         for percent in range(0, 101, 5):
             time.sleep(duration / 20)
-            st.progress(percent)
+            progress.progress(percent)
 
 # File upload
 st.markdown("## Upload Training Material (PDF or Video)")
@@ -60,44 +62,58 @@ if uploaded_file is not None:
     with tab1:
         st.header("Summary")
         with st.spinner("Generating summary..."):
-            summary_prompt = f"Summarize this training material in simple terms:\n{content_text[:3000]}"
-            short_text = full_text[:3000]  # Adjust length to stay within token limits
-summary = openai.ChatCompletion.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": f"Summarize the following text:\n\n{short_text}"}]
-)
-
-            )["choices"][0]["message"]["content"]
-            st.write(summary)
+            try:
+                short_text = content_text[:3000]
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": f"Summarize the following text:\n\n{short_text}"}]
+                )
+                st.write(response["choices"][0]["message"]["content"])
+            except Exception as e:
+                st.error("An error occurred while generating the summary.")
+                st.exception(e)
 
     with tab2:
         st.header("Quiz Time")
         with st.spinner("Creating quiz questions..."):
-            quiz_prompt = f"Create 5 MCQs with 4 options each based on this content. Mark the correct answer with (*) symbol:\n{content_text[:3000]}"
-            quiz = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": quiz_prompt}]
-            )["choices"][0]["message"]["content"]
-            st.markdown(quiz)
+            try:
+                quiz_prompt = f"Create 5 MCQs with 4 options each based on this content. Mark the correct answer with (*) symbol:\n{content_text[:3000]}"
+                quiz = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": quiz_prompt}]
+                )["choices"][0]["message"]["content"]
+                st.markdown(quiz)
+            except Exception as e:
+                st.error("Failed to create quiz.")
+                st.exception(e)
 
     with tab3:
         st.header("Situational Practice")
         with st.spinner("Creating scenario-based questions..."):
-            scenario_prompt = f"Generate 3 real-world training scenarios from this content. Ask the user how they would respond."
-            scenarios = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": scenario_prompt}]
-            )["choices"][0]["message"]["content"]
-            st.markdown(scenarios)
+            try:
+                scenario_prompt = "Generate 3 real-world training scenarios from this content. Ask the user how they would respond."
+                scenarios = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": scenario_prompt}]
+                )["choices"][0]["message"]["content"]
+                st.markdown(scenarios)
+            except Exception as e:
+                st.error("Failed to create scenarios.")
+                st.exception(e)
 
     with tab4:
         st.header("AI Chat Tutor")
         st.info("Ask questions about your material")
         user_q = st.text_input("Ask me anything from your uploaded content")
         if user_q:
-            chat_prompt = f"This is the content: {content_text}\nNow answer the user's question: {user_q}"
-            reply = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": chat_prompt}]
-            )["choices"][0]["message"]["content"]
-            st.success(reply)
+            try:
+                chat_prompt = f"This is the content: {content_text}\nNow answer the user's question: {user_q}"
+                reply = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": chat_prompt}]
+                )["choices"][0]["message"]["content"]
+                st.success(reply)
+            except Exception as e:
+                st.error("Failed to answer the question.")
+                st.exception(e)
+
