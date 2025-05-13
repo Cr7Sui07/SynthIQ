@@ -9,7 +9,7 @@ import time
 from langdetect import detect
 from googletrans import Translator
 
-# Load OpenAI API Key
+# Load your OpenAI API key securely from .streamlit/secrets.toml
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 translator = Translator()
 
@@ -18,10 +18,9 @@ st.set_page_config(layout="wide", page_title="AI Training Assistant", page_icon=
 # Progress Meter
 def loading_bar(text, duration=2):
     with st.spinner(text):
-        progress = st.empty()
         for percent in range(0, 101, 5):
             time.sleep(duration / 20)
-            progress.progress(percent)
+            st.progress(percent)
 
 # File upload
 st.markdown("## Upload Training Material (PDF or Video)")
@@ -64,11 +63,11 @@ if uploaded_file is not None:
         with st.spinner("Generating summary..."):
             try:
                 short_text = content_text[:3000]
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                summary = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": f"Summarize the following text:\n\n{short_text}"}]
                 )
-                st.write(response["choices"][0]["message"]["content"])
+                st.write(summary['choices'][0]['message']['content'])
             except Exception as e:
                 st.error("An error occurred while generating the summary.")
                 st.exception(e)
@@ -79,7 +78,7 @@ if uploaded_file is not None:
             try:
                 quiz_prompt = f"Create 5 MCQs with 4 options each based on this content. Mark the correct answer with (*) symbol:\n{content_text[:3000]}"
                 quiz = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": quiz_prompt}]
                 )["choices"][0]["message"]["content"]
                 st.markdown(quiz)
@@ -91,14 +90,14 @@ if uploaded_file is not None:
         st.header("Situational Practice")
         with st.spinner("Creating scenario-based questions..."):
             try:
-                scenario_prompt = "Generate 3 real-world training scenarios from this content. Ask the user how they would respond."
+                scenario_prompt = f"Generate 3 real-world training scenarios from this content. Ask the user how they would respond."
                 scenarios = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": scenario_prompt}]
                 )["choices"][0]["message"]["content"]
                 st.markdown(scenarios)
             except Exception as e:
-                st.error("Failed to create scenarios.")
+                st.error("Failed to generate scenarios.")
                 st.exception(e)
 
     with tab4:
@@ -109,11 +108,10 @@ if uploaded_file is not None:
             try:
                 chat_prompt = f"This is the content: {content_text}\nNow answer the user's question: {user_q}"
                 reply = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": chat_prompt}]
                 )["choices"][0]["message"]["content"]
                 st.success(reply)
             except Exception as e:
                 st.error("Failed to answer the question.")
                 st.exception(e)
-
